@@ -1,72 +1,90 @@
+#!/usr/bin/env python3
+import collections
 import os
 import re
-import urllib
 import shutil
-import collections
-from bs4 import BeautifulSoup
+import urllib
 from string import ascii_uppercase
 from urllib.request import urlopen
+from bs4 import BeautifulSoup
 
-# Folder to Store A-Z
-downloads_folder_name = "downloaded_books"
-ext_dict = ["mobi", "azw3", "epub"]
+# Variables
+downloadFolder = "downloaded_books"
+fileExtensions = ["mobi", "azw3", "epub"]
 
-downloaded_files = 0
 
-# Check if Exists
-if not os.path.exists(downloads_folder_name):
-	os.makedirs(downloads_folder_name)
+# Check if the download folder does not exist, and create it if it does not.
+if not os.path.exists(downloadFolder):
+	os.makedirs(downloadFolder)
+# Exception: The folder already exists
+else:
+	pass
 
-for c in ascii_uppercase:
 
-	# Check if Exists
-	if not os.path.exists(downloads_folder_name + os.sep + c):
-		os.makedirs(downloads_folder_name + os.sep + c)
+# Main Loop; Itterate through the alphabet
+for currentLetter in ascii_uppercase:
 
+	# Check if the current letter folder does not exists, and create it if it does not.
+	if not os.path.exists(downloadFolder + os.sep + currentLetter):
+		os.makedirs(downloadFolder + os.sep + currentLetter)
+	# Exception: The folder already exists
+	else: 
+  		pass
+
+
+	# Assign the books variable as the current 
 	try:
-		books = BeautifulSoup(urlopen("https://ebooks.adelaide.edu.au/meta/titles/" + c + ".html"), "html.parser")
+		books = BeautifulSoup(urlopen("https://ebooks.adelaide.edu.au/meta/titles/" + currentLetter + ".html"), "html.parser")
+	# Exception: URL Does not exist or does not resolve
 	except: 
-		continue
+		pass
 
-	# Go through Each Works
-	for works in books.select("ul.works > li > a"):
-		title = works.get_text()
-		url = works['href']
 
-		title = re.sub(r"[^A-Za-z0-9 ]+", "", title) 
+	# Nested Loop; Each book located in the directory
+	for book in books.select("ul.works > li > a"):
 
-		title = title[:150]
-		
-		# If Empty, Ignore. 
-		if title == "":
+		# Set the bookTitle for the book, this includes filtering for symbols and reduces it to 150 chars
+		bookTitle = book.get_text()
+		bookTitle = re.sub(r"[^A-Za-z0-9 ]+", "", bookTitle)
+		bookTitle = bookTitle[:150]
+
+		# Get the directory for the book
+		url = book["href"]
+
+
+		# Check if the current book folder does not exist. and create it if it does not.
+		if not os.path.exists(downloadFolder + os.sep + currentLetter + os.sep + bookTitle):
+			os.makedirs(downloadFolder + os.sep + currentLetter + os.sep + bookTitle)
+		# Exception: The directory already exists
+		else:
+			pass
+
+
+		# If a book titles name is empty, skip it
+		if bookTitle == "":
 			continue
-		
-		# Make Works Folder
-		if not os.path.exists(downloads_folder_name + os.sep + c + os.sep + title):
-			os.makedirs(downloads_folder_name + os.sep + c + os.sep + title)
+		else:
+			pass
 
-		# Download Content from Book Page
-		try:
-			bookurl = urlopen("https://ebooks.adelaide.edu.au" + url)
-		except: 
-			continue
 
-		url_parts = ("https://ebooks.adelaide.edu.au" + url).split('/')		
+		# This is jank code and I wish I wrote it better, but it works.
+		url_parts = ("https://ebooks.adelaide.edu.au" + url).split("/")		
 		tmp = collections.deque(url_parts)
 		tmp.rotate(2)
 		url_parts_rotated = list(collections.deque(tmp))
 
-		for ext in ext_dict:
-			# Try downloading each extension
-			try:
-				download_url = "https://ebooks.adelaide.edu.au" + url + url_parts_rotated[0] + "." + ext
-				file = downloads_folder_name + os.sep + c + os.sep + title + os.sep + url_parts_rotated[0] + "." + ext
+		# Nested Loop; Try downloading each book extension
+		for ext in fileExtensions:
 
-				with urllib.request.urlopen(download_url) as response, open(file, 'wb') as out_file:
+			# Try to download the current book with its extension
+			try:
+				downloadURL = ("https://ebooks.adelaide.edu.au" + url + url_parts_rotated[0] + "." + ext)
+				file = (downloadFolder + os.sep + currentLetter + os.sep + bookTitle + os.sep + url_parts_rotated[0] + "." + ext)
+
+				with urllib.request.urlopen(downloadURL) as response, open(file, "wb") as out_file:
 				    shutil.copyfileobj(response, out_file)
-				
-				downloaded_files = downloaded_files + 1
-				print ("\rDownloaded " + str(downloaded_files) + "                          \r", end="")
+				print ("\rDownloaded " + str(downloadURL))
+
+			# Exception: File does not exist, skip extension.
 			except:
-				# File does not exist, skip extension.
-				continue
+				pass
