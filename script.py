@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+
+#
+# This program was written back in 2017-2018 to try and download the collection of files from
+# the e-book archive of the University of Adelaide. The collection was uploaded on some jank  
+# brewed system, so I had to get creative. My hastly written notes are located in notes.md
+# and have barely been changed since I originally wrote them (only some syntax changes).
+# Yes I know that I could make this better, but this was uploaded so people could see how I 
+# tackled this challenge, and if somebody wants to write a hyperthreaded and faster version
+# of it, do it then. 
+#
+
 import collections
 import os
 import re
